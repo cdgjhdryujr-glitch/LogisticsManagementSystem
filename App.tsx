@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Package,
   TruckIcon,
@@ -52,75 +52,9 @@ const mockShipments: Shipment[] = [
     origin: 'Chicago, IL',
     destination: 'Houston, TX',
     status: 'delivered',
-    carrier: 'UPS',
+    carrier: 'GLT',
     estimatedDelivery: 'Nov 3, 2025',
     weight: '3.8 kg',
-    priority: 'standard',
-  },
-  {
-    id: '3',
-    trackingNumber: 'TRK001234569',
-    origin: 'Seattle, WA',
-    destination: 'Miami, FL',
-    status: 'pending',
-    carrier: 'DHL',
-    estimatedDelivery: 'Nov 7, 2025',
-    weight: '12.5 kg',
-    priority: 'overnight',
-  },
-  {
-    id: '4',
-    trackingNumber: 'TRK001234570',
-    origin: 'Boston, MA',
-    destination: 'Denver, CO',
-    status: 'in-transit',
-    carrier: 'FedEx',
-    estimatedDelivery: 'Nov 6, 2025',
-    weight: '7.1 kg',
-    priority: 'express',
-  },
-  {
-    id: '5',
-    trackingNumber: 'TRK001234571',
-    origin: 'Phoenix, AZ',
-    destination: 'Atlanta, GA',
-    status: 'delayed',
-    carrier: 'UPS',
-    estimatedDelivery: 'Nov 8, 2025',
-    weight: '4.3 kg',
-    priority: 'standard',
-  },
-  {
-    id: '6',
-    trackingNumber: 'TRK001234572',
-    origin: 'San Francisco, CA',
-    destination: 'Portland, OR',
-    status: 'delivered',
-    carrier: 'DHL',
-    estimatedDelivery: 'Nov 2, 2025',
-    weight: '2.9 kg',
-    priority: 'overnight',
-  },
-  {
-    id: '7',
-    trackingNumber: 'TRK001234573',
-    origin: 'Dallas, TX',
-    destination: 'Philadelphia, PA',
-    status: 'in-transit',
-    carrier: 'FedEx',
-    estimatedDelivery: 'Nov 5, 2025',
-    weight: '8.7 kg',
-    priority: 'express',
-  },
-  {
-    id: '8',
-    trackingNumber: 'TRK001234574',
-    origin: 'Las Vegas, NV',
-    destination: 'Charlotte, NC',
-    status: 'pending',
-    carrier: 'UPS',
-    estimatedDelivery: 'Nov 9, 2025',
-    weight: '6.4 kg',
     priority: 'standard',
   },
 ];
@@ -164,7 +98,9 @@ export default function App() {
   const [activeTab, setActiveTab] = useState('all');
   const [selectedShipment, setSelectedShipment] = useState<Shipment | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isFormOpen, setIsFormOpen] = useState(false);
 
+  // Use mock data for now; replace with storage logic if needed
   const stats = {
     total: mockShipments.length,
     inTransit: mockShipments.filter(s => s.status === 'in-transit').length,
@@ -220,17 +156,18 @@ export default function App() {
             </div>
           </div>
           <div className="header-actions">
-            <button className="btn btn-secondary">
-              <BarChart3 />
+            <button className="btn-secondary-new">
+              <BarChart3 size={18} />
               Reports
             </button>
-            <button className="btn btn-primary">
-              <Plus />
+            <button className="btn-primary-new" onClick={()=> setIsFormOpen(true)}>
+              <Plus size={18} />
               New Shipment
             </button>
           </div>
         </div>
       </header>
+
 
       {/* Main Content */}
       <main className="main">
@@ -240,7 +177,7 @@ export default function App() {
             <div className="stat-content">
               <div className="stat-label">Total Shipments</div>
               <div className="stat-value">{stats.total}</div>
-              <div className="stat-change positive">+12% from last month</div>
+              <div className="stat-change positive">Live Updating</div>
             </div>
             <div className="stat-icon blue">
               <Package />
@@ -262,7 +199,7 @@ export default function App() {
             <div className="stat-content">
               <div className="stat-label">Delivered</div>
               <div className="stat-value">{stats.delivered}</div>
-              <div className="stat-change positive">+8% from last month</div>
+              <div className="stat-change positive">Updates instantly</div>
             </div>
             <div className="stat-icon green">
               <CheckCircle2 />
@@ -273,7 +210,7 @@ export default function App() {
             <div className="stat-content">
               <div className="stat-label">Delayed</div>
               <div className="stat-value">{stats.delayed}</div>
-              <div className="stat-change negative">-3% from last month</div>
+              <div className="stat-change negative">{stats.delayed} issues</div>
             </div>
             <div className="stat-icon red">
               <AlertCircle />
@@ -375,7 +312,7 @@ export default function App() {
                           <td>
                             <div className="route">
                               <span>{shipment.origin}</span>
-                              <MapPin />
+                              <MapPin size={12} />
                               <span>{shipment.destination}</span>
                             </div>
                           </td>
@@ -397,7 +334,7 @@ export default function App() {
                               className="btn-view"
                               onClick={() => handleViewDetails(shipment)}
                             >
-                              <Eye />
+                              <Eye size={16} />
                               View
                             </button>
                           </td>
@@ -420,12 +357,12 @@ export default function App() {
               <h2>Recent Activity</h2>
             </div>
             <div className="activity-list">
-              {mockActivities.map((activity) => (
+              {mockActivities.slice(0,5).map((activity) => (
                 <div key={activity.id} className="activity-item">
                   <div className={`activity-icon ${activity.type}`}>
-                    {activity.type === 'delivery' && <CheckCircle2 />}
-                    {activity.type === 'shipment' && <Package />}
-                    {activity.type === 'alert' && <AlertCircle />}
+                    {activity.type === 'delivery' && <CheckCircle2 size={16} />}
+                    {activity.type === 'shipment' && <Package size={16}/>}
+                    {activity.type === 'alert' && <AlertCircle size={16}/>}
                   </div>
                   <div className="activity-content">
                     <div className="activity-message">{activity.message}</div>
@@ -449,7 +386,149 @@ export default function App() {
     </div>
   );
 }
+// Shipment Form Component
+function ShipmentForm({ onClose, onSubmit }: { onClose: () => void, onSubmit: (s: Shipment) => void }): JSX.Element {
+  const [formData, setFormData] = useState({
+    origin: '',
+    destination: '',
+    carrier: '',
+    weight: '',
+    priority: 'standard' as 'standard' | 'express' | 'overnight',
+    status: 'pending' as 'pending' | 'in-transit' | 'delivered' | 'delayed',
+    estimatedDelivery: '',
+  });
 
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const newShipment: Shipment = {
+      id: Date.now().toString(),
+      trackingNumber: `TRK${Math.random().toString(36).substr(2,9).toUpperCase()}`,
+      ...formData,
+    };
+    onSubmit(newShipment);
+  };
+
+  return (
+    <div className='modal-overlay' onClick={onClose}>
+    <div className="modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '600px' }}>
+      <div className="modal-header">
+        <div>
+          <h2>New Shipment</h2>
+          <p>Fill in the details to create a new shipment</p>
+        </div>
+      <div className='modal-body'>
+        <form onSubmit={handleSubmit}>
+          <div className="form-group">
+            <label className='form-label'>Origin</label>
+            <input
+              type="text"
+              className='form-input'
+              value={formData.origin}
+              onChange={(e) => setFormData({ ...formData, origin: e.target.value })}
+              required
+            />
+          </div>
+
+          <div className="form-group">
+            <label className='form-label'>Destination</label>
+            <input
+              type="text"
+              className='form-input'
+              value={FormData.destination}
+              onChange={(e) => setFormData({ ...formData, destination: e.target.value })}
+              required
+            />
+          </div>
+
+          <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem'}}>
+           <div className="form-group">
+              <label className='form-label'>Carrier</label>
+              <select
+                className='form-input'
+                value={formData.carrier} 
+                onChange={(e) => setFormData({ ...formData, carrier: e.target.value })}>
+                  <option value="FedEx">FedEx</option>
+                  <option value="GLT">GLT</option>
+                  <option value="DHL">DHL</option>
+                  <option value="UPS">UPS</option>
+              </select>
+           </div>
+            
+           <div className="form-group">
+              <label className='form-label'>Weight (kg)</label>
+              <input
+                type="text"
+                className='form-input'
+                placeholder='e.g., 5.2kg'
+                value={formData.weight}
+                onChange={(e) => setFormData({ ...formData, weight: e.target.value })}
+                  required
+                  />
+            </div>
+            </div>
+
+             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+              <div className="form-group">
+                <label className="form-label">Priority</label>
+                <select
+                  className="form-input"
+                  value={formData.priority}
+                  onChange={(e) => setFormData({ ...formData, priority: e.target.value as any })}
+                >
+                  <option value="standard">Standard</option>
+                  <option value="express">Express</option>
+                  <option value="overnight">Overnight</option>
+                </select>
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Status</label>
+                <select
+                  className="form-input"
+                  value={formData.status}
+                  onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}
+                >
+                  <option value="pending">Pending</option>
+                  <option value="in-transit">In Transit</option>
+                  <option value="delivered">Delivered</option>
+                  <option value="delayed">Delayed</option>
+          
+
+
+
+                </select>
+          </div>
+          </div>
+          <div className="form-group">
+            <label className='form-label'>Estimated Delivery </label>
+            <input
+            type='text'
+            className='form-input'
+            placeholder='e.g., Nov 10, 2025'
+            value={formData.estimatedDelivery}
+            onChange={(e) => setFormData({ ...formData, estimatedDelivery: e.target.value })}
+            required
+            />
+          </div>
+
+          <div style={{display:'flex', gap:'1rem', justifyContent:'flex-end', marginTop:'2rem'}}>
+            <button type='button' className='btn-secondary-new' onClick={onClose}>
+              cancel
+            </button>
+            <button type='submit' className='btn-primary-new'>
+              Create Shipment
+            </button>
+          </div>
+        </form>
+      </div>
+      </div>
+    </div>
+    );
+    }
+
+  
+
+            
 // Tracking Modal Component
 function TrackingModal({ shipment, isOpen, onClose }: { shipment: Shipment; isOpen: boolean; onClose: () => void }) {
   const getTrackingEvents = () => {
@@ -625,4 +704,4 @@ function TrackingModal({ shipment, isOpen, onClose }: { shipment: Shipment; isOp
       </div>
     </div>
   );
-}
+ 
