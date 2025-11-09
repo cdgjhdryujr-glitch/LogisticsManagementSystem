@@ -14,6 +14,7 @@ import {
   X,
 } from 'lucide-react';
 import './styles/app.css';
+import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 interface Shipment {
   id: string;
@@ -73,6 +74,7 @@ export default function App() {
   const [activities, setActivities] = useState<Activity[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [isReportsOpen, setIsReportsOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('all');
   const [selectedShipment, setSelectedShipment] = useState<Shipment | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -484,7 +486,7 @@ export default function App() {
             </div>
           </div>
           <div className="header-actions">
-            <button className="btn-secondary-new">
+<button className="btn-secondary-new" onClick={() => setIsReportsOpen(true)}>
               <BarChart3 size={18} />
               Reports
             </button>
@@ -731,6 +733,15 @@ export default function App() {
           onSubmit={handleAddShipment}
         />
       )}
+
+        {/* Reports Modal */}
+      {isReportsOpen && (
+        <ReportsModal
+          shipments={shipments}
+          isOpen={isReportsOpen}
+          onClose={() => setIsReportsOpen(false)}
+          />
+      )}
     </div>
   );
 }
@@ -758,6 +769,7 @@ function ShipmentForm({ onClose, onSubmit }: { onClose: () => void; onSubmit: (s
     
     onSubmit(newShipment);
   };
+
 
   return (
     <div className="modal-overlay" onClick={onClose}>
@@ -882,6 +894,7 @@ function ShipmentForm({ onClose, onSubmit }: { onClose: () => void; onSubmit: (s
     </div>
   );
 }
+
 
 // Tracking Modal Component
 function TrackingModal({ shipment, isOpen, onClose }: { shipment: Shipment; isOpen: boolean; onClose: () => void }) {
@@ -1049,6 +1062,180 @@ function TrackingModal({ shipment, isOpen, onClose }: { shipment: Shipment; isOp
                   </div>
                 </div>
               ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+// Reports Modal Component
+function ReportsModal({ shipments, isOpen, onClose }: { shipments: Shipment[]; isOpen: boolean; onClose: () => void }) {
+  const statusData = [
+    { name: 'Pending', value: shipments.filter(s => s.status === 'pending').length, color: '#6b7280' },
+    { name: 'In Transit', value: shipments.filter(s => s.status === 'in-transit').length, color: '#3b82f6' },
+    { name: 'Delivered', value: shipments.filter(s => s.status === 'delivered').length, color: '#10b981' },
+    { name: 'Delayed', value: shipments.filter(s => s.status === 'delayed').length, color: '#ef4444' },
+  ].filter(item => item.value > 0);
+
+  const priorityData = [
+    { name: 'Standard', value: shipments.filter(s => s.priority === 'standard').length, color: '#6b7280' },
+    { name: 'Express', value: shipments.filter(s => s.priority === 'express').length, color: '#f97316' },
+    { name: 'Overnight', value: shipments.filter(s => s.priority === 'overnight').length, color: '#a855f7' },
+  ].filter(item => item.value > 0);
+
+  const carrierCounts: { [key: string]: number } = {};
+  shipments.forEach(s => {
+    carrierCounts[s.carrier] = (carrierCounts[s.carrier] || 0) + 1;
+  });
+  const carrierData = Object.entries(carrierCounts).map(([name, value]) => ({ name, value }));
+
+  return (
+    <div className={`modal-overlay ${!isOpen ? 'hidden' : ''}`} onClick={onClose}>
+      <div className="modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '1200px' }}>
+        <div className="modal-header">
+          <div>
+            <h2>Shipment Analytics & Reports</h2>
+            <p>Comprehensive overview of your shipment data and performance metrics</p>
+          </div>
+          <button className="modal-close" onClick={onClose}>
+            <X />
+          </button>
+        </div>
+
+        <div className="modal-body">
+          {/* Summary Stats */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem', marginBottom: '2rem' }}>
+            <div style={{ padding: '1rem', background: '#f9fafb', borderRadius: '8px' }}>
+              <div style={{ fontSize: '0.875rem', color: '#6b7280', marginBottom: '0.5rem' }}>Total Shipments</div>
+              <div style={{ fontSize: '2rem', fontWeight: '600' }}>{shipments.length}</div>
+            </div>
+            <div style={{ padding: '1rem', background: '#dbeafe', borderRadius: '8px' }}>
+              <div style={{ fontSize: '0.875rem', color: '#1e40af', marginBottom: '0.5rem' }}>In Transit</div>
+              <div style={{ fontSize: '2rem', fontWeight: '600', color: '#1e40af' }}>
+                {shipments.filter(s => s.status === 'in-transit').length}
+              </div>
+            </div>
+            <div style={{ padding: '1rem', background: '#d1fae5', borderRadius: '8px' }}>
+              <div style={{ fontSize: '0.875rem', color: '#065f46', marginBottom: '0.5rem' }}>Delivered</div>
+              <div style={{ fontSize: '2rem', fontWeight: '600', color: '#065f46' }}>
+                {shipments.filter(s => s.status === 'delivered').length}
+              </div>
+            </div>
+            <div style={{ padding: '1rem', background: '#fee2e2', borderRadius: '8px' }}>
+              <div style={{ fontSize: '0.875rem', color: '#991b1b', marginBottom: '0.5rem' }}>Delayed</div>
+              <div style={{ fontSize: '2rem', fontWeight: '600', color: '#991b1b' }}>
+                {shipments.filter(s => s.status === 'delayed').length}
+              </div>
+            </div>
+          </div>
+
+          {/* Charts Grid */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem', marginBottom: '2rem' }}>
+            {/* Status Distribution */}
+            <div style={{ background: 'white', padding: '1.5rem', borderRadius: '8px', border: '1px solid #e5e7eb' }}>
+              <h3 style={{ fontSize: '1.125rem', fontWeight: '600', marginBottom: '1rem' }}>Status Distribution</h3>
+              {statusData.length > 0 ? (
+                <ResponsiveContainer width="100%" height={300}>
+                  <PieChart>
+                    <Pie
+                      data={statusData}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                      outerRadius={80}
+                      fill="#8884d8"
+                      dataKey="value"
+                    >
+                      {statusData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                  </PieChart>
+                </ResponsiveContainer>
+              ) : (
+                <div style={{ textAlign: 'center', padding: '3rem', color: '#6b7280' }}>No data available</div>
+              )}
+            </div>
+
+            {/* Priority Distribution */}
+            <div style={{ background: 'white', padding: '1.5rem', borderRadius: '8px', border: '1px solid #e5e7eb' }}>
+              <h3 style={{ fontSize: '1.125rem', fontWeight: '600', marginBottom: '1rem' }}>Priority Distribution</h3>
+              {priorityData.length > 0 ? (
+                <ResponsiveContainer width="100%" height={300}>
+                  <PieChart>
+                    <Pie
+                      data={priorityData}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                      outerRadius={80}
+                      fill="#8884d8"
+                      dataKey="value"
+                    >
+                      {priorityData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                  </PieChart>
+                </ResponsiveContainer>
+              ) : (
+                <div style={{ textAlign: 'center', padding: '3rem', color: '#6b7280' }}>No data available</div>
+              )}
+            </div>
+          </div>
+
+          {/* Carrier Performance */}
+          <div style={{ background: 'white', padding: '1.5rem', borderRadius: '8px', border: '1px solid #e5e7eb' }}>
+            <h3 style={{ fontSize: '1.125rem', fontWeight: '600', marginBottom: '1rem' }}>Shipments by Carrier</h3>
+            {carrierData.length > 0 ? (
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={carrierData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="name" />
+                  <YAxis />
+                  <Tooltip />
+                  <Legend />
+                  <Bar dataKey="value" fill="#3b82f6" name="Shipments" />
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <div style={{ textAlign: 'center', padding: '3rem', color: '#6b7280' }}>No data available</div>
+            )}
+          </div>
+
+          {/* Performance Metrics */}
+          <div style={{ marginTop: '2rem' }}>
+            <h3 style={{ fontSize: '1.125rem', fontWeight: '600', marginBottom: '1rem' }}>Performance Metrics</h3>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem' }}>
+              <div style={{ padding: '1rem', background: '#f9fafb', borderRadius: '8px' }}>
+                <div style={{ fontSize: '0.875rem', color: '#6b7280', marginBottom: '0.25rem' }}>Delivery Success Rate</div>
+                <div style={{ fontSize: '1.5rem', fontWeight: '600' }}>
+                  {shipments.length > 0 
+                    ? `${((shipments.filter(s => s.status === 'delivered').length / shipments.length) * 100).toFixed(1)}%`
+                    : '0%'
+                  }
+                </div>
+              </div>
+              <div style={{ padding: '1rem', background: '#f9fafb', borderRadius: '8px' }}>
+                <div style={{ fontSize: '0.875rem', color: '#6b7280', marginBottom: '0.25rem' }}>Active Shipments</div>
+                <div style={{ fontSize: '1.5rem', fontWeight: '600' }}>
+                  {shipments.filter(s => s.status === 'in-transit' || s.status === 'pending').length}
+                </div>
+              </div>
+              <div style={{ padding: '1rem', background: '#f9fafb', borderRadius: '8px' }}>
+                <div style={{ fontSize: '0.875rem', color: '#6b7280', marginBottom: '0.25rem' }}>Delay Rate</div>
+                <div style={{ fontSize: '1.5rem', fontWeight: '600' }}>
+                  {shipments.length > 0 
+                    ? `${((shipments.filter(s => s.status === 'delayed').length / shipments.length) * 100).toFixed(1)}%`
+                    : '0%'
+                  }
+                </div>
+              </div>
             </div>
           </div>
         </div>
